@@ -11,9 +11,17 @@ fn main() {
     const x:i32 = 5;
     let y = 6;
     another_function(x, y);
+
+    let y = five();
+    println!("The value of x is {}", y);
+}
+
+fn five() -> i32 {
+    5
 }
 
 fn another_function(x: i32, y: i32) {
     println!("Another function argument values are {} and {}", x, y);
 }
+
 
