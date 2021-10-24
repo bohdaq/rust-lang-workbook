@@ -133,6 +133,51 @@ fn main() {
     let r3 = &mut s; // no problem
     println!("{}", r3);
 }
+//The scopes of the immutable references r1 and r2 end after the println! where they are last used, which is before the mutable reference r3 is created. These scopes don’t overlap, so this code is allowed. The ability of the compiler to tell that a reference is no longer being used at a point before the end of the scope is called Non-Lexical Lifetimes (NLL for short), and you can read more about it in The Edition Guide.
+//Even though borrowing errors may be frustrating at times, remember that it’s the Rust compiler pointing out a potential bug early (at compile time rather than at runtime) and showing you exactly where the problem is. Then you don’t have to track down why your data isn’t what you thought it was.
 
 
+//Dangling References
+//In languages with pointers, it’s easy to erroneously create a dangling pointer, a pointer that references a location in memory that may have been given to someone else, by freeing some memory while preserving a pointer to that memory. In Rust, by contrast, the compiler guarantees that references will never be dangling references: if you have a reference to some data, the compiler will ensure that the data will not go out of scope before the reference to the data does.
+//Let’s try to create a dangling reference, which Rust will prevent with a compile-time error:
 
+fn main() {
+    let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String {
+    let s = String::from("hello");
+
+    &s
+}
+
+//error[E0106]: missing lifetime specifier
+//
+//This error message refers to a feature we haven’t covered yet: lifetimes. We’ll discuss lifetimes in detail in Chapter 10. But, if you disregard the parts about lifetimes, the message does contain the key to why this code is a problem:
+//this function's return type contains a borrowed value, but there is no value for it to be borrowed from.
+//Let’s take a closer look at exactly what’s happening at each stage of our dangle code:
+
+fn dangle() -> &String { // dangle returns a reference to a String
+
+    let s = String::from("hello"); // s is a new String
+
+    &s // we return a reference to the String, s
+} // Here, s goes out of scope, and is dropped. Its memory goes away.
+
+//Because s is created inside dangle, when the code of dangle is finished, s will be deallocated. But we tried to return a reference to it. That means this reference would be pointing to an invalid String. That’s no good! Rust won’t let us do this.
+
+//The solution here is to return the String directly:
+fn no_dangle() -> String {
+    let s = String::from("hello");
+
+    s
+}
+
+//This works without any problems. Ownership is moved out, and nothing is deallocated.
+
+
+//The Rules of References
+//Let’s recap what we’ve discussed about references:
+//  At any given time, you can have either one mutable reference or any number of immutable references.
+//  References must always be valid.
+//Next, we’ll look at a different kind of reference: slices.
